@@ -199,7 +199,7 @@
     echoClient.SetFill("This is the payload");
 
     echoClient.SetStartTime(Seconds(3.0));
-    echoClient.SetStartTime(Seconds(10.0));
+    echoClient.SetStopTime(Seconds(10.0));
 
 
 
