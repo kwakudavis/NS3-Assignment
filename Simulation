@@ -196,7 +196,7 @@
     echoClient.SetDataSize(sizeOfPackets);
 
 
-    echoClient.SetFill("This is the payload");
+    echoClient.SetFill("Helloworldthisisamessagebeingtransmittedfromclienttoserver");
 
     echoClient.SetStartTime(Seconds(3.0));
     echoClient.SetStopTime(Seconds(10.0));
