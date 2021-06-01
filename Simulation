@@ -1,223 +1,173 @@
+#include <iostream>
+
+#include "ns3/core-module.h"
+
+#include "ns3/network-module.h"
+
+#include "ns3/internet-module.h"
+
+#include "ns3/point-to-point-module.h"
+
+#include "ns3/applications-module.h"
+
 
 using namespace ns3;
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char * argv[]) {
 
-    //Specifying simulations would occur at times nano second x X.
-    Time::SetResolution(Time::NS);
+  //Setting Parameters
+  uint32_t nPackets = 1;
+  char DataRate[] = "5Mbps";
+  char Delay[] = "2ms";
+  uint32_t nBytesPerPacket = 1024;
+  float fInterval = 2.0;
+
+  CommandLine cmd;
+
+  cmd.AddValue("DataRate", "PointToPointDevice: transmit rate", DataRate);
+  cmd.AddValue("Delay", "PointToPointChannel: Propagation Delay", Delay);
+  cmd.AddValue("nPackets", "UdpEchoClient: Number of packets to echo", nPackets);
+  cmd.AddValue("PacketSize", "UdpEchoCLient: Size of packets in bytes", nBytesPerPacket);
+  cmd.AddValue("Interval", "UdpClient: Interval between sent packets", fInterval);
+
+  cmd.Parse(argc, argv);
+
+  //Specifying simulations would occur at times nano second x X.
+  Time::SetResolution(Time::NS);
   ns3::LogComponentEnable("UdpEchoClientApplication", LOG_LEVEL_INFO);
   ns3::LogComponentEnable("UdpEchoServerApplication", LOG_LEVEL_INFO);
 
+  //ASSIGNMENT MODIFICATION -  CREATION OF CLIENT NODE
+  Node clientNode;
 
-    //Creation  of node containers which would group nodes, they contain pointers to the node objects
-    NodeContainer nodeContainer;
+  //ASSIGNMENT MODIFICATION - CREATION OF SERVER NODE
+  Node serverNode;
 
+  //Create a network device to be attached to the client  node
+  PointToPointNetDevice clientNetDevice;
 
+  //Create a network device to be attached to the server  node
+  PointToPointNetDevice serverNetDevice;
 
-    //ASSIGNMENT MODIFICATION -  CREATION OF CLIENT NODE
-    Node  clientNode;
+  //Attach Client and Server Nodes to network devices
 
-    //ASSIGNMENT MODIFICATION - CREATION OF SERVER NODE
-    Node  serverNode;
+  clientNode.AddDevice( & clientNetDevice);
+  serverNode.AddDevice( & serverNetDevice);
 
+  //Set DataRate of client device
 
+  ns3::DataRate clientDataRate = ns3::DataRate(DataRate);
 
+  clientNetDevice.SetDataRate(clientDataRate);
+  serverNetDevice.SetDataRate(clientDataRate);
 
-    //Create a network device to be attached to the client  node
-    PointToPointNetDevice clientNetDevice;
+  //Create a Point To Point Channel
+  PointToPointChannel p2pChannel;
 
+  //Set delay in channel
+  Time delayTime = Seconds(0.002);
 
-    //Create a network device to be attached to the server  node
-    PointToPointNetDevice serverNetDevice;
+  //Attach the server and client to the channel
+  p2pChannel.Attach( & clientNetDevice);
 
+  p2pChannel.Attach( & serverNetDevice);
 
-    //Attach Client and Server Nodes to network devices
+  //Create and associate a Layer 3 ARP protocol with the client and server node
 
-    clientNode.AddDevice(&clientNetDevice);
-    serverNode.AddDevice(&serverNetDevice);
+  ObjectFactory factory;
 
+  factory.SetTypeId(ns3::ArpL3Protocol::GetTypeId());
+  clientNode.AggregateObject(factory.Create < Object > ());
+  serverNode.AggregateObject(factory.Create < Object > ());
 
+  //Create and associate a Layer 3 IPv4 protocol with the client and server node
 
+  factory.SetTypeId(ns3::Ipv4L3Protocol::GetTypeId());
+  clientNode.AggregateObject(factory.Create < Object > ());
+  serverNode.AggregateObject(factory.Create < Object > ());
 
-    //Set DataRate of client device
+  //Create and associate a Layer 4 Icmp protocol with the client and server node
 
-    ns3::DataRate clientDataRate = ns3::DataRate(DataRate);
+  factory.SetTypeId(ns3::Icmpv4L4Protocol::GetTypeId());
+  clientNode.AggregateObject(factory.Create < Object > ());
+  serverNode.AggregateObject(factory.Create < Object > ());
 
-    clientNetDevice.SetDataRate(clientDataRate);
-    serverNetDevice.SetDataRate(clientDataRate);
+  //UDP PROTOCOL
 
+  factory.SetTypeId(ns3::UdpL4Protocol::GetTypeId());
 
+  clientNode.AggregateObject(factory.Create < Object > ());
+  serverNode.AggregateObject(factory.Create < Object > ());
 
-
-    //Create a Point To Point Channel
-    PointToPointChannel p2pChannel;
-
-
-    //Set delay in channel
-    Time delayTime = Seconds(0.002);
-
-
-
-
-    //Attach the server and client to the channel
-    p2pChannel.Attach(&clientNetDevice);
-
-
-    p2pChannel.Attach(&serverNetDevice);
-
-
-
-
-
-
-
-    //Create and associate a Layer 3 ARP protocol with the client and server node
-
-
-     ObjectFactory factory;
-
-     factory.SetTypeId(ns3::ArpL3Protocol::GetTypeId());
-     clientNode.AggregateObject(factory.Create<Object>());
-     serverNode.AggregateObject(factory.Create<Object>());
-
-
-
-
-
-    //Create and associate a Layer 3 IPv4 protocol with the client and server node
-
-
-
-
-     factory.SetTypeId(ns3::Ipv4L3Protocol::GetTypeId());
-     clientNode.AggregateObject(factory.Create<Object>());
-     serverNode.AggregateObject(factory.Create<Object>());
-
-
-
-
-
-
-
-     //Create and associate a Layer 4 Icmp protocol with the client and server node
-
-     factory.SetTypeId(ns3::Icmpv4L4Protocol::GetTypeId());
-     clientNode.AggregateObject(factory.Create<Object>());
-     serverNode.AggregateObject(factory.Create<Object>());
-
-
-
-
-
-
-
-
-     //UDP PROTOCOL
-
-    factory.SetTypeId(ns3::UdpL4Protocol::GetTypeId());
-
-
-     clientNode.AggregateObject(factory.Create<Object>());
-     serverNode.AggregateObject(factory.Create<Object>());
-
-
-
-
-     //TCP L4 PROTOCOL
-     factory.SetTypeId(ns3::TcpL4Protocol::GetTypeId());
-     clientNode.AggregateObject(factory.Create<Object>());
-     serverNode.AggregateObject(factory.Create<Object>());
-
-
-
-
-
+  //TCP L4 PROTOCOL
+  factory.SetTypeId(ns3::TcpL4Protocol::GetTypeId());
+  clientNode.AggregateObject(factory.Create < Object > ());
+  serverNode.AggregateObject(factory.Create < Object > ());
 
   ///IPInterface
 
+  Ipv4Interface clientIpv4Interface;
 
-    Ipv4Interface clientIpv4Interface;
+  clientIpv4Interface.SetNode( & clientNode);
 
-    clientIpv4Interface.SetNode(&clientNode);
+  Ipv4Interface serverIpv4Interface;
 
+  serverIpv4Interface.SetNode( & serverNode);
 
+  //Set the network address
 
-    Ipv4Interface serverIpv4Interface;
+  const Ipv4Address network = "127.0.0.0";
 
-    serverIpv4Interface.SetNode(&serverNode);
+  const Ipv4Mask netMask = "255.255.255.128";
 
-
-
-
-
-    //Set the network address
-
-    const Ipv4Address network = "127.0.0.0";
-
-    const Ipv4Mask netMask = "255.255.255.128";
-
-    Ipv4AddressGenerator::Init(network,netMask, "0.0.0.1");
+  Ipv4AddressGenerator::Init(network, netMask, "0.0.0.1");
 
   // Generate an Ip address for the client and server
-   Ipv4Address clientAddress = Ipv4AddressGenerator::NextAddress(netMask);
-   clientIpv4Interface.AddAddress(Ipv4InterfaceAddress(clientAddress,netMask));
-   clientIpv4Interface.SetUp();
+  Ipv4Address clientAddress = Ipv4AddressGenerator::NextAddress(netMask);
+  clientIpv4Interface.AddAddress(Ipv4InterfaceAddress(clientAddress, netMask));
+  clientIpv4Interface.SetUp();
 
+  Ipv4Address serverAddress = Ipv4AddressGenerator::NextAddress(netMask);
+  serverIpv4Interface.AddAddress(Ipv4InterfaceAddress(serverAddress, netMask));
+  serverIpv4Interface.SetUp();
 
-
-   Ipv4Address serverAddress = Ipv4AddressGenerator::NextAddress(netMask);
-   serverIpv4Interface.AddAddress(Ipv4InterfaceAddress(serverAddress,netMask));
-   serverIpv4Interface.SetUp();
-
-   
-
-
+  //Specify the port and establish Ipv4 endpoint
+  ns3::InetSocketAddress::InetSocketAddress(clientAddress, 9);
 
   //Create UDP server and client applications and assign them to their respective nodes
 
-   UdpEchoServer echoServer;
+  UdpEchoServer echoServer;
 
-   echoServer.SetNode(&serverNode);
+  echoServer.SetNode( & serverNode);
 
-   echoServer.SetStartTime(Seconds((1.0)));
+  echoServer.SetStartTime(Seconds((1.0)));
 
-   echoServer.SetStopTime(Seconds(10.0));
+  echoServer.SetStopTime(Seconds(10.0));
 
+  //Create UDP client application and attach it to a node
 
+  UdpEchoClient echoClient;
 
+  echoClient.SetNode( & clientNode);
 
-    //Create UDP client application and attach it to a node
+  echoClient.SetRemote(serverAddress);
 
-    UdpEchoClient echoClient;
+  uint32_t sizeOfPackets = 1024;
 
-    echoClient.SetNode(&clientNode);
+  echoClient.SetDataSize(sizeOfPackets);
 
-    echoClient.SetRemote(serverAddress);
+  echoClient.SetFill("Helloworldthisisamessagebeingtransmittedfromclienttoserver");
 
-    uint32_t sizeOfPackets= 1024;
-
-    echoClient.SetDataSize(sizeOfPackets);
-
-
-    echoClient.SetFill("Helloworldthisisamessagebeingtransmittedfromclienttoserver");
-
-    echoClient.SetStartTime(Seconds(3.0));
-    echoClient.SetStopTime(Seconds(10.0));
-
-
-
+  echoClient.SetStartTime(Seconds(3.0));
+  echoClient.SetStopTime(Seconds(10.0));
 
   // PointToPointHelper pointToPointHelper;
-   pointToPointHelper.EnablePcap("clientPcap",&clientNetDevice);
-   pointToPointHelper.EnablePcap("serverPcap",&serverNetDevice);
+  pointToPointHelper.EnablePcap("clientPcap", & clientNetDevice);
+  pointToPointHelper.EnablePcap("serverPcap", & serverNetDevice);
 
+  Simulator::Run();
+  Simulator::Destroy();
 
+  return 0;
 
-   Simulator::Run();
-   Simulator::Destroy();
-   
-   
-   return 0;
-   
-   }
+}
