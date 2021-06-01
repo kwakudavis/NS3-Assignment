@@ -1,9 +1,13 @@
 
+using namespace ns3;
+
+int main(int argc, char* argv[])
+{
 
     //Specifying simulations would occur at times nano second x X.
     Time::SetResolution(Time::NS);
-  // ns3::LogComponentEnable("UdpEchoClientApplication", LOG_LEVEL_INFO);
-  // ns3::LogComponentEnable("UdpEchoServerApplication", LOG_LEVEL_INFO);
+  ns3::LogComponentEnable("UdpEchoClientApplication", LOG_LEVEL_INFO);
+  ns3::LogComponentEnable("UdpEchoServerApplication", LOG_LEVEL_INFO);
 
 
     //Creation  of node containers which would group nodes, they contain pointers to the node objects
@@ -68,7 +72,7 @@
 
 
 
-    //Create and associate a Layer 3 ARP protocol with the client and node
+    //Create and associate a Layer 3 ARP protocol with the client and server node
 
 
      ObjectFactory factory;
@@ -81,7 +85,7 @@
 
 
 
-    //Create and associate a Layer 3 IPv4 protocol with the client node
+    //Create and associate a Layer 3 IPv4 protocol with the client and server node
 
 
 
@@ -96,7 +100,7 @@
 
 
 
-     //Create and associate a Layer 4 Icmp protocol with the client node
+     //Create and associate a Layer 4 Icmp protocol with the client and server node
 
      factory.SetTypeId(ns3::Icmpv4L4Protocol::GetTypeId());
      clientNode.AggregateObject(factory.Create<Object>());
@@ -212,3 +216,8 @@
 
    Simulator::Run();
    Simulator::Destroy();
+   
+   
+   return 0;
+   
+   }
